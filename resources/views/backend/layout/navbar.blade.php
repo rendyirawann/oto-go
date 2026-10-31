@@ -6,6 +6,16 @@
 
 <div class="app-topbar">
 
+    {{-- Shortcut to the AI agent (also in the menu and the floating "Tanya AI" button). --}}
+    @if (Route::has('admin.ai.index'))
+        <a href="{{ route('admin.ai.index') }}"
+            class="btn btn-sm btn-dark d-inline-flex align-items-center gap-2 h-35px h-lg-40px px-3 {{ request()->routeIs('admin.ai.*') ? 'active' : '' }}"
+            title="Asisten AI" aria-label="Buka Asisten AI">
+            <img src="{{ asset('assets/media/branding/logo-mark.svg') }}" alt="" width="18" height="18" style="border-radius:5px" />
+            <span class="d-none d-sm-inline">Asisten AI</span>
+        </a>
+    @endif
+
     <!--begin::Notifications-->
     <div class="position-relative">
         <button type="button"
