@@ -572,3 +572,90 @@ table.dataTable.table-hover > tbody > tr:hover > * {
     background: repeating-linear-gradient(90deg, var(--og-yellow) 0 22px, transparent 22px 36px);
     border-radius: 2px;
 }
+
+/* --------------------------------------------------------------------------
+   13. Semantic colours: Metronic's stock blue/purple replaced with calmer,
+   brand-compatible tones (green / teal / amber / red), light + dark.
+   -------------------------------------------------------------------------- */
+:root,
+[data-bs-theme="light"] {
+    --bs-success: #15803d;
+    --bs-success-rgb: 21, 128, 61;
+    --bs-success-active: #116932;
+    --bs-success-light: #e3f5e9;
+    --bs-success-clarity: rgba(21, 128, 61, .18);
+    --bs-success-inverse: #ffffff;
+    --bs-text-success: #15803d;
+
+    --bs-info: #0e7490;
+    --bs-info-rgb: 14, 116, 144;
+    --bs-info-active: #0b5f76;
+    --bs-info-light: #e0f2f6;
+    --bs-info-clarity: rgba(14, 116, 144, .18);
+    --bs-info-inverse: #ffffff;
+    --bs-text-info: #0e7490;
+
+    --bs-warning: #d97706;
+    --bs-warning-rgb: 217, 119, 6;
+    --bs-warning-active: #b45309;
+    --bs-warning-light: #fdf1dc;
+    --bs-warning-clarity: rgba(217, 119, 6, .18);
+    --bs-warning-inverse: #ffffff;
+    --bs-text-warning: #b45309;
+
+    --bs-danger: #dc2626;
+    --bs-danger-rgb: 220, 38, 38;
+    --bs-danger-active: #b91c1c;
+    --bs-danger-light: #fde8e8;
+    --bs-danger-clarity: rgba(220, 38, 38, .18);
+    --bs-danger-inverse: #ffffff;
+    --bs-text-danger: #dc2626;
+}
+
+[data-bs-theme="dark"] {
+    --bs-success: #22c55e;
+    --bs-success-rgb: 34, 197, 94;
+    --bs-success-light: #0f2a1a;
+    --bs-success-inverse: #0c0e11;
+    --bs-text-success: #4ade80;
+
+    --bs-info: #22a3c2;
+    --bs-info-rgb: 34, 163, 194;
+    --bs-info-light: #0c2830;
+    --bs-info-inverse: #0c0e11;
+    --bs-text-info: #5cc3dc;
+
+    --bs-warning: #f59e0b;
+    --bs-warning-rgb: 245, 158, 11;
+    --bs-warning-light: #2e2210;
+    --bs-warning-inverse: #0c0e11;
+    --bs-text-warning: #fbbf24;
+
+    --bs-danger: #ef4444;
+    --bs-danger-rgb: 239, 68, 68;
+    --bs-danger-light: #2e1414;
+    --bs-danger-inverse: #0c0e11;
+    --bs-text-danger: #f87171;
+}
+
+/* Pagination follows the ink/orange pill used in the menu. */
+.pagination {
+    --bs-pagination-active-bg: var(--og-ink);
+    --bs-pagination-active-border-color: var(--og-ink);
+    --bs-pagination-active-color: var(--og-paper);
+    --bs-pagination-hover-bg: var(--bs-gray-200);
+    --bs-pagination-focus-box-shadow: 0 0 0 3px var(--bs-primary-clarity);
+}
+
+[data-bs-theme="dark"] .pagination {
+    --bs-pagination-active-bg: var(--bs-primary);
+    --bs-pagination-active-border-color: var(--bs-primary);
+    --bs-pagination-active-color: #111418;
+}
+
+.page-item.active .page-link,
+.pagination .page-item.active .page-link {
+    background-color: var(--bs-pagination-active-bg) !important;
+    border-color: var(--bs-pagination-active-border-color) !important;
+    color: var(--bs-pagination-active-color) !important;
+}

@@ -6,10 +6,8 @@
 
     @include('partials.meta')
 
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family={{ str_replace(' ', '+', $brand['font']) }}:wght@400;600;700;800&display=swap" />
+    <link href="{{ asset('assets/fonts/otogo-fonts.css') }}" rel="stylesheet" type="text/css" />
+    <link href="{{ asset('assets/css/otogo-tokens.css') }}" rel="stylesheet" type="text/css" />
 
     <link href="{{ asset('assets/plugins/global/plugins.bundle.css') }}" rel="stylesheet" type="text/css" />
     <link href="{{ asset('assets/css/style.bundle.css') }}" rel="stylesheet" type="text/css" />
@@ -22,7 +20,7 @@
         }
 
         body {
-            font-family: '{{ $brand['font'] }}', system-ui, sans-serif;
+            font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
         }
     </style>
 </head>

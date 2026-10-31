@@ -384,6 +384,11 @@ def main():
     errors = new_log_errors(log_offset)
     rep.check("logs", "no new ERROR in laravel.log", not errors, " | ".join(errors[:3]))
 
+    # Remove the throwaway API account(s) this run registered.
+    if os.path.exists(os.path.join(ROOT, "artisan")):
+        import subprocess
+        subprocess.run(["php", "artisan", "otogo:uat-cleanup"], cwd=ROOT, capture_output=True)
+
     total = len(rep.rows)
     print(f"\nResult: {total - rep.failures}/{total} checks passed, {rep.failures} failed.\n")
     return 0 if rep.failures == 0 else 1
