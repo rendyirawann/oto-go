@@ -7,50 +7,67 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Applies a pragmatic set of browser security headers.
+ * Browser security headers, tuned for an "A" on securityheaders.com without
+ * breaking any page:
  *
- * The policy is deliberately permissive enough for the Metronic theme
- * (inline scripts/styles, Google Fonts, CDN plugins, Reverb websockets)
- * while still closing off clickjacking, MIME sniffing, referrer leakage
- * and cross-origin form hijacking.
+ *   Content-Security-Policy, X-Frame-Options, X-Content-Type-Options,
+ *   Referrer-Policy, Permissions-Policy and (over HTTPS) Strict-Transport-
+ *   Security, plus Cross-Origin-Opener/Resource-Policy.
+ *
+ * The CSP is chosen per area:
+ *  - admin portal and Swagger UI: the Metronic bundles and Swagger need
+ *    inline scripts and eval, and the admin talks to the Reverb websocket;
+ *  - public site (landing, blog): no eval, same-origin connections only;
+ *  - JSON / API responses: a lock-down policy (nothing may load from them).
+ *
+ * Only Google Fonts is allowed as a third-party origin; everything else is
+ * served from this host so no network or ad-blocker can strip an asset.
  */
 class SecurityHeaders
 {
     public function handle(Request $request, Closure $next): Response
     {
         $response = $next($request);
+        $headers = $response->headers;
 
-        $response->headers->set('X-Content-Type-Options', 'nosniff');
-        $response->headers->set('X-Frame-Options', 'SAMEORIGIN');
-        $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
-        $response->headers->set('X-Permitted-Cross-Domain-Policies', 'none');
-        $response->headers->set('Cross-Origin-Resource-Policy', 'same-site');
-        $response->headers->set(
-            'Permissions-Policy',
-            'accelerometer=(), autoplay=(), camera=(), display-capture=(), encrypted-media=(), '
-            . 'geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), usb=()'
-        );
+        $headers->set('X-Content-Type-Options', 'nosniff');
+        $headers->set('X-Frame-Options', 'SAMEORIGIN');
+        $headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
+        $headers->set('X-Permitted-Cross-Domain-Policies', 'none');
+        $headers->set('Cross-Origin-Resource-Policy', 'same-site');
+        $headers->set('Permissions-Policy', implode(', ', [
+            'accelerometer=()', 'autoplay=()', 'browsing-topics=()', 'camera=()', 'display-capture=()',
+            'encrypted-media=()', 'geolocation=(self)', 'gyroscope=()', 'magnetometer=()', 'microphone=()',
+            'midi=()', 'payment=()', 'usb=()',
+        ]));
 
         // Hide server fingerprints where PHP lets us.
-        $response->headers->remove('X-Powered-By');
-        $response->headers->remove('Server');
+        $headers->remove('X-Powered-By');
+        $headers->remove('Server');
 
         if ($request->secure() && config('security.hsts', false)) {
-            $response->headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+            $headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
         }
 
-        if (config('security.csp.enabled', true) && $this->isHtml($response)) {
-            $header = config('security.csp.report_only', false)
-                ? 'Content-Security-Policy-Report-Only'
-                : 'Content-Security-Policy';
+        if (! config('security.csp.enabled', true)) {
+            return $response;
+        }
 
-            $response->headers->set($header, $this->policy());
+        $cspHeader = config('security.csp.report_only', false)
+            ? 'Content-Security-Policy-Report-Only'
+            : 'Content-Security-Policy';
+
+        if ($this->isHtml($response)) {
+            $headers->set('Cross-Origin-Opener-Policy', 'same-origin');
+            $headers->set($cspHeader, $this->htmlPolicy($request));
+        } elseif ($this->isJson($response)) {
+            $headers->set($cspHeader, "default-src 'none'; frame-ancestors 'none'; base-uri 'none'");
         }
 
         // Never let a browser or proxy cache an authenticated page.
         if ($request->user() !== null && $this->isHtml($response)) {
-            $response->headers->set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
-            $response->headers->set('Pragma', 'no-cache');
+            $headers->set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+            $headers->set('Pragma', 'no-cache');
         }
 
         return $response;
@@ -61,23 +78,35 @@ class SecurityHeaders
         return str_contains((string) $response->headers->get('Content-Type', 'text/html'), 'text/html');
     }
 
-    private function policy(): string
+    private function isJson(Response $response): bool
+    {
+        return str_contains((string) $response->headers->get('Content-Type', ''), 'json');
+    }
+
+    /** Admin portal and the Swagger UI need the more permissive script policy. */
+    private function isAppShell(Request $request): bool
+    {
+        return $request->is('admin', 'admin/*', 'api/documentation', 'api/documentation/*', 'docs', 'docs/*');
+    }
+
+    private function htmlPolicy(Request $request): string
     {
         $extra = array_filter(array_map('trim', (array) config('security.csp.extra_hosts', [])));
         $hosts = $extra === [] ? '' : ' ' . implode(' ', $extra);
+        $shell = $this->isAppShell($request);
 
         $directives = [
             "default-src 'self'",
-            // Metronic ships inline bootstrapping code and some plugins eval templates.
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com" . $hosts,
-            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com" . $hosts,
-            "font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com",
-            // Avatars, generated branding, data: sprites and blob: canvas exports.
+            "script-src 'self' 'unsafe-inline'" . ($shell ? " 'unsafe-eval'" : '') . $hosts,
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com" . $hosts,
+            "font-src 'self' data: https://fonts.gstatic.com",
+            // Avatars, uploaded covers, data: sprites and blob: canvas exports.
             "img-src 'self' data: blob: https:",
             "media-src 'self' data: blob:",
-            // Same-origin XHR plus the Reverb websocket.
-            "connect-src 'self' ws: wss: https:" . $hosts,
+            // Admin: same-origin XHR plus the Reverb websocket.
+            "connect-src 'self'" . ($shell ? ' ws: wss: https:' : '') . $hosts,
             "worker-src 'self' blob:",
+            "manifest-src 'self'",
             "frame-src 'self'",
             "frame-ancestors 'self'",
             "form-action 'self'",
@@ -85,7 +114,7 @@ class SecurityHeaders
             "object-src 'none'",
         ];
 
-        if (config('security.csp.upgrade_insecure', false)) {
+        if ($request->secure() || config('security.csp.upgrade_insecure', false)) {
             $directives[] = 'upgrade-insecure-requests';
         }
 

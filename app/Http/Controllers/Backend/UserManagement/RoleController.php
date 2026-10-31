@@ -113,11 +113,11 @@ class RoleController extends Controller implements HasMiddleware
             })
 
             ->editColumn('name', function ($data) {
-                return '<label class="badge badge-primary">' . $data->name . '</label>';
+                return '<label class="badge badge-primary">' . e($data->name) . '</label>';
             })
 
             ->editColumn('guard_name', function ($data) {
-                return '<label class="badge badge-primary">' . $data->guard_name . '</label>';
+                return '<label class="badge badge-primary">' . e($data->guard_name) . '</label>';
             })
 
             ->addColumn('created_at', function ($row) {

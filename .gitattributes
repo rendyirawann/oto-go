@@ -9,3 +9,7 @@
 /.github export-ignore
 CHANGELOG.md export-ignore
 .styleci.yml export-ignore
+
+# Windows batch files must keep CRLF or cmd mis-parses labels.
+*.bat text eol=crlf
+*.cmd text eol=crlf

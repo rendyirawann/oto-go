@@ -60,6 +60,15 @@ return Application::configure(basePath: dirname(__DIR__))
             fn (\Illuminate\Http\Request $request) => $request->is('api/*') || $request->expectsJson()
         );
 
+        // API clients get the 401 in Indonesian, like every other API message.
+        $exceptions->render(function (\Illuminate\Auth\AuthenticationException $e, \Illuminate\Http\Request $request) {
+            if ($request->is('api/*')) {
+                return response()->json(['message' => 'Sesi berakhir atau token tidak valid. Silakan masuk kembali.'], 401);
+            }
+
+            return null;
+        });
+
         // Unknown API routes: a clear JSON 404 instead of a generic page.
         $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\NotFoundHttpException $e, \Illuminate\Http\Request $request) {
             if ($request->is('api/*')) {

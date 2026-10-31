@@ -75,5 +75,33 @@ class RolePermissionSeeder extends Seeder
             'view_help',
         ];
         $roleAdmin->syncPermissions($adminPermissions);
+
+        // ================================================
+        // 4. OTOGO PLATFORM & BUSINESS ROLES (PLAN.md bagian 3)
+        // ================================================
+        // Permissions are only granted when the role is first created, so a
+        // re-seed never overwrites what an admin changed later in the UI.
+        // "customer" deliberately has no back-office permission: customers use
+        // the mobile app / API, and the web portal signs them out.
+        $otogoRoles = [
+            'platform_staff' => ['view_dashboard', 'view_help'],
+            'owner' => ['view_dashboard', 'view_data_master', 'view_help'],
+            'manager' => ['view_dashboard', 'view_data_master', 'view_help'],
+            'cashier' => ['view_dashboard', 'view_help'],
+            'mechanic' => ['view_dashboard', 'view_help'],
+            'washer' => ['view_dashboard', 'view_help'],
+            'driver' => ['view_dashboard', 'view_help'],
+            'customer' => [],
+        ];
+
+        foreach ($otogoRoles as $name => $permissions) {
+            $role = Role::firstOrCreate(['name' => $name, 'guard_name' => 'web']);
+
+            if ($role->wasRecentlyCreated && $permissions !== []) {
+                $role->givePermissionTo($permissions);
+            }
+        }
+
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
     }
 }

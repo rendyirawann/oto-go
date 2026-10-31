@@ -58,6 +58,7 @@
 
 {{-- Favicon set --}}
 <link rel="icon" href="{{ $brand['favicon_url'] }}" sizes="any" />
+<link rel="icon" type="image/svg+xml" href="{{ $brand['favicon_svg_url'] ?? $brand['favicon_url'] }}" />
 <link rel="icon" type="image/png" sizes="32x32" href="{{ $brand['favicon_png_url'] }}" />
 <link rel="apple-touch-icon" sizes="180x180" href="{{ $brand['apple_icon_url'] }}" />
 <link rel="manifest" href="{{ $brand['manifest_url'] }}" />

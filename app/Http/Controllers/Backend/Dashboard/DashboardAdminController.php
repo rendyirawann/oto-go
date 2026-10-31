@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Support\ActivityDiff;
 use Carbon\CarbonPeriod;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Spatie\Activitylog\Models\Activity;
@@ -17,19 +18,41 @@ class DashboardAdminController extends Controller
     /** How many days the activity trend chart covers. */
     private const TREND_DAYS = 14;
 
+    /** Aggregates are cached briefly per user: fresh enough, cheap on reload. */
+    private const CACHE_SECONDS = 60;
+
     public function index(): View
     {
         $user = auth()->user();
         $isSuperadmin = $user->hasRole(['Superadmin', 'superadmin']);
 
-        return view('backend.dashboard.index', [
-            'isSuperadmin' => $isSuperadmin,
+        $aggregates = $this->cached("dashboard.aggregates.{$user->getKey()}", fn () => [
             'stats' => $this->stats($isSuperadmin, $user),
             'trend' => $this->trend($isSuperadmin, $user),
             'breakdown' => $this->breakdown($isSuperadmin, $user),
+        ]);
+
+        return view('backend.dashboard.index', [
+            'isSuperadmin' => $isSuperadmin,
+            'stats' => $aggregates['stats'],
+            'trend' => $aggregates['trend'],
+            'breakdown' => $aggregates['breakdown'],
             'recent' => $this->recent($isSuperadmin, $user),
             'topUsers' => $isSuperadmin ? $this->topUsers() : collect(),
         ]);
+    }
+
+    /**
+     * Cache wrapper that degrades to a direct computation when the cache
+     * store is unavailable, so the dashboard never fails because of Redis.
+     */
+    private function cached(string $key, \Closure $compute): array
+    {
+        try {
+            return Cache::remember($key, self::CACHE_SECONDS, $compute);
+        } catch (\Throwable) {
+            return $compute();
+        }
     }
 
     /** Base activity query, narrowed to the current user unless Superadmin. */
@@ -47,8 +70,10 @@ class DashboardAdminController extends Controller
     /** @return array<string,int|string> */
     private function stats(bool $isSuperadmin, User $user): array
     {
+        // Range instead of whereDate() so the created_at index is usable.
         $today = (clone $this->activityQuery($isSuperadmin, $user))
-            ->whereDate('created_at', today())
+            ->where('created_at', '>=', today())
+            ->where('created_at', '<', today()->addDay())
             ->count();
 
         $week = (clone $this->activityQuery($isSuperadmin, $user))
@@ -89,8 +114,7 @@ class DashboardAdminController extends Controller
     /**
      * Daily activity counts for the trend chart.
      *
-     * Rows are grouped in PHP rather than SQL so the query stays portable
-     * across MySQL/PostgreSQL date functions.
+     * Grouped in SQL: DATE() exists on PostgreSQL, MySQL and SQLite alike.
      *
      * @return array{labels: list<string>, data: list<int>}
      */
@@ -100,9 +124,11 @@ class DashboardAdminController extends Controller
 
         $counts = (clone $this->activityQuery($isSuperadmin, $user))
             ->where('created_at', '>=', $from)
-            ->get(['created_at'])
-            ->groupBy(fn ($row) => $row->created_at->toDateString())
-            ->map->count();
+            ->selectRaw('DATE(created_at) as day, COUNT(*) as total')
+            ->groupByRaw('DATE(created_at)')
+            ->toBase()
+            ->get()
+            ->mapWithKeys(fn ($row) => [substr((string) $row->day, 0, 10) => (int) $row->total]);
 
         $labels = [];
         $data = [];
@@ -154,7 +180,7 @@ class DashboardAdminController extends Controller
     private function recent(bool $isSuperadmin, User $user)
     {
         return (clone $this->activityQuery($isSuperadmin, $user))
-            ->with('causer')
+            ->with('causer:id,name,email,avatar')
             ->latest()
             ->limit(8)
             ->get();
@@ -172,7 +198,9 @@ class DashboardAdminController extends Controller
             ->limit(5)
             ->get();
 
-        $users = User::whereIn('id', $counts->pluck('causer_id'))->get()->keyBy('id');
+        $users = User::whereIn('id', $counts->pluck('causer_id'))
+            ->get(['id', 'name', 'email', 'avatar', 'username'])
+            ->keyBy('id');
 
         return $counts
             ->map(fn ($row) => [

@@ -1,6 +1,13 @@
 {
-    "name": "StarterTemp",
-    "short_name": "StarterTemp",
+    "name": "OtoGo",
+    "short_name": "OtoGo",
+    "description": "Booking bengkel, doorsmeer, dan sparepart di Kota Medan.",
+    "lang": "id",
+    "start_url": "/",
+    "scope": "/",
+    "display": "standalone",
+    "theme_color": "#111418",
+    "background_color": "#F5F3EE",
     "icons": [
         {
             "src": "/assets/media/branding/icon-192.png",
@@ -11,9 +18,17 @@
             "src": "/assets/media/branding/icon-512.png",
             "sizes": "512x512",
             "type": "image/png"
+        },
+        {
+            "src": "/assets/media/branding/icon-maskable-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "/assets/media/branding/favicon.svg",
+            "sizes": "any",
+            "type": "image/svg+xml"
         }
-    ],
-    "theme_color": "#3adfab",
-    "background_color": "#ffffff",
-    "display": "standalone"
+    ]
 }

@@ -28,8 +28,14 @@ class CheckMaintenanceMode
                     return $next($request);
                 }
 
-                // Return 503 Maintenance response
-                return response()->view('errors.503', [], 503);
+                // Return 503 Maintenance response (JSON for the API / XHR).
+                if ($request->is('api/*') || $request->expectsJson()) {
+                    return response()->json([
+                        'message' => 'OtoGo sedang dalam perawatan. Silakan coba lagi beberapa saat lagi.',
+                    ], 503, ['Retry-After' => '300']);
+                }
+
+                return response()->view('errors.503', [], 503, ['Retry-After' => '300']);
             }
         } catch (\Exception $e) {
             // If DB/Settings fail, just continue normally

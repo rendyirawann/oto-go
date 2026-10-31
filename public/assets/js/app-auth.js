@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Authentication screens: entry preloader, animated topology background,
+   Authentication screens: entry preloader, lane-flow background,
    saved-account picker, sign-in submit flow and the hand-off into the
    dashboard. Vanilla JS, no build step.
    ========================================================================== */
@@ -12,9 +12,6 @@
     /** localStorage key holding the identifiers used on this device. */
     var ACCOUNTS_KEY = 'app:accounts';
     var ACCOUNTS_MAX = 4;
-
-    var P5_URL = 'https://cdn.jsdelivr.net/npm/p5@1.9.0/lib/p5.min.js';
-    var VANTA_URL = 'https://cdn.jsdelivr.net/npm/vanta@0.5.24/dist/vanta.topology.min.js';
 
     var reduceMotion = false;
 
@@ -60,29 +57,6 @@
        in place, so the page is never worse off for trying.
        ---------------------------------------------------------------------- */
 
-    function loadScript(src) {
-        return new Promise(function (resolve, reject) {
-            var tag = document.createElement('script');
-            tag.src = src;
-            tag.async = true;
-            tag.crossOrigin = 'anonymous';
-            tag.onload = resolve;
-            tag.onerror = function () {
-                reject(new Error('failed to load ' + src));
-            };
-            document.head.appendChild(tag);
-        });
-    }
-
-    /**
-     * Drift the background against the pointer.
-     *
-     * Vanta's topology effect ignores the cursor entirely — its draw loop
-     * only walks particles through a flow field baked once at setup, and it
-     * never reads mouseX/mouseY. So the response to the cursor is ours: the
-     * canvas is rendered slightly larger than the viewport and nudged the
-     * opposite way to the pointer, which reads as parallax depth.
-     */
     function initParallax(host) {
         if (reduceMotion) {
             return;
@@ -123,58 +97,171 @@
         }, { passive: true });
     }
 
+    /**
+     * "Lane flow" background: dashed road markings drifting across the
+     * screen with a few orange dots travelling along them - OtoGo's take on
+     * traffic seen from above. Drawn locally on a canvas (no CDN, ~2KB),
+     * throttled to 30fps, paused while the tab is hidden, skipped on phones
+     * and for reduced-motion users (the still background stays).
+     */
     function initVanta() {
         var host = document.getElementById('auth-vanta');
 
-        if (!host || reduceMotion) {
+        if (!host || reduceMotion || window.innerWidth < 768 || !window.requestAnimationFrame) {
             return;
         }
 
-        // A phone repainting a full-screen canvas costs battery for a
-        // background people look at for seconds; the still image is enough.
-        if (window.innerWidth < 768) {
+        var canvas = document.createElement('canvas');
+        var ctx = canvas.getContext && canvas.getContext('2d');
+
+        if (!ctx) {
             return;
         }
 
-        var dark = isDark();
-        var color = host.getAttribute(dark ? 'data-color-dark' : 'data-color-light') || '#6366f1';
-        var background = host.getAttribute(dark ? 'data-bg-dark' : 'data-bg-light') || '#eef2f8';
+        canvas.style.width = '100%';
+        canvas.style.height = '100%';
+        canvas.style.display = 'block';
+        host.appendChild(canvas);
 
-        // Downloading starts immediately (p5 is ~1MB) but the canvas is only
-        // revealed once the preloader has cleared, so the two never overlap.
+        var dpr = Math.min(window.devicePixelRatio || 1, 2);
+        var width = 0;
+        var height = 0;
+        var lanes = [];
+        var cars = [];
+
+        function palette() {
+            var dark = isDark();
+
+            return {
+                bg: host.getAttribute(dark ? 'data-bg-dark' : 'data-bg-light') || (dark ? '#0c0e11' : '#f5f3ee'),
+                line: dark ? 'rgba(237, 234, 227, 0.09)' : 'rgba(17, 20, 24, 0.08)',
+                accent: host.getAttribute(dark ? 'data-color-dark' : 'data-color-light') || '#ff5a1f'
+            };
+        }
+
+        function layout() {
+            var rect = host.getBoundingClientRect();
+            width = Math.max(200, rect.width);
+            height = Math.max(200, rect.height);
+            canvas.width = Math.round(width * dpr);
+            canvas.height = Math.round(height * dpr);
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+            lanes = [];
+            var count = 9;
+
+            for (var i = 0; i < count; i++) {
+                var y = height * (0.06 + i * (0.9 / (count - 1)));
+                var amp = height * (0.05 + (i % 3) * 0.025);
+                lanes.push({
+                    p0: { x: -60, y: y },
+                    p1: { x: width * 0.32, y: y + amp * (i % 2 ? 1 : -1) },
+                    p2: { x: width * 0.66, y: y - amp * (i % 2 ? 0.6 : -0.8) },
+                    p3: { x: width + 60, y: y + amp * 0.35 },
+                    speed: 14 + (i % 4) * 6,
+                    width: i % 4 === 1 ? 2 : 1.25
+                });
+            }
+
+            cars = [
+                { lane: 2, t: 0.1, speed: 0.022 },
+                { lane: 5, t: 0.55, speed: 0.016 },
+                { lane: 7, t: 0.8, speed: 0.027 }
+            ];
+        }
+
+        function point(l, t) {
+            var u = 1 - t;
+
+            return {
+                x: u * u * u * l.p0.x + 3 * u * u * t * l.p1.x + 3 * u * t * t * l.p2.x + t * t * t * l.p3.x,
+                y: u * u * u * l.p0.y + 3 * u * u * t * l.p1.y + 3 * u * t * t * l.p2.y + t * t * t * l.p3.y
+            };
+        }
+
+        var last = 0;
+        var elapsed = 0;
+        var running = true;
+
+        function frame(now) {
+            if (!running) {
+                return;
+            }
+
+            window.requestAnimationFrame(frame);
+
+            if (now - last < 33) {
+                return;
+            }
+
+            var dt = last ? Math.min(0.1, (now - last) / 1000) : 0;
+            last = now;
+            elapsed += dt;
+
+            var colors = palette();
+            ctx.fillStyle = colors.bg;
+            ctx.fillRect(0, 0, width, height);
+
+            ctx.lineCap = 'round';
+
+            for (var i = 0; i < lanes.length; i++) {
+                var l = lanes[i];
+                ctx.beginPath();
+                ctx.moveTo(l.p0.x, l.p0.y);
+                ctx.bezierCurveTo(l.p1.x, l.p1.y, l.p2.x, l.p2.y, l.p3.x, l.p3.y);
+                ctx.setLineDash([22, 26]);
+                ctx.lineDashOffset = -elapsed * l.speed;
+                ctx.strokeStyle = colors.line;
+                ctx.lineWidth = l.width;
+                ctx.stroke();
+            }
+
+            ctx.setLineDash([]);
+
+            for (var c = 0; c < cars.length; c++) {
+                var car = cars[c];
+                car.t = (car.t + car.speed * dt) % 1;
+                var p = point(lanes[car.lane], car.t);
+
+                ctx.beginPath();
+                ctx.fillStyle = colors.accent;
+                ctx.globalAlpha = 0.85;
+                ctx.arc(p.x, p.y, 3.5, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.globalAlpha = 0.16;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 11, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1;
+            }
+        }
+
+        layout();
+
+        var resizeTimer;
+        window.addEventListener('resize', function () {
+            window.clearTimeout(resizeTimer);
+            resizeTimer = window.setTimeout(layout, 150);
+        }, { passive: true });
+
+        document.addEventListener('visibilitychange', function () {
+            running = !document.hidden;
+
+            if (running) {
+                last = 0;
+                window.requestAnimationFrame(frame);
+            }
+        });
+
+        // Revealed once the preloader has cleared, so the two never overlap.
         var revealAt = (window.__authPreloadStart || Date.now()) + PRELOAD_MS + 120;
 
-        loadScript(P5_URL)
-            .then(function () {
-                return loadScript(VANTA_URL);
-            })
-            .then(function () {
-                if (!window.VANTA || !window.VANTA.TOPOLOGY || !window.p5) {
-                    return;
-                }
-
-                window.__vantaEffect = window.VANTA.TOPOLOGY({
-                    el: host,
-                    p5: window.p5,
-                    mouseControls: false,
-                    touchControls: false,
-                    gyroControls: false,
-                    minHeight: 200,
-                    minWidth: 200,
-                    scale: 1,
-                    scaleMobile: 1,
-                    color: color,
-                    backgroundColor: background
-                });
-
-                window.setTimeout(function () {
-                    host.classList.add('is-on');
-                    initParallax(host);
-                }, Math.max(0, revealAt - Date.now()));
-            })
-            .catch(function () {
-                /* Still background stays — nothing to do. */
-            });
+        window.requestAnimationFrame(frame);
+        window.setTimeout(function () {
+            host.classList.add('is-on');
+            initParallax(host);
+        }, Math.max(0, revealAt - Date.now()));
     }
 
     /* ----------------------------------------------------------------------

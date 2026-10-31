@@ -17,30 +17,20 @@
 
     @include('partials.meta')
 
-    {{-- The topology background pulls p5 + Vanta from here. --}}
-    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family={{ str_replace(' ', '+', $brand['font']) }}:wght@300;400;500;600;700;800&display=swap" />
+        href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" />
 
     <link href="{{ asset('assets/plugins/global/plugins.bundle.css') }}" rel="stylesheet" type="text/css" />
     <link href="{{ asset('assets/css/style.bundle.css') }}" rel="stylesheet" type="text/css" />
-    <link href="{{ asset('assets/css/app-auth.css') }}" rel="stylesheet" type="text/css" />
+    <link href="{{ asset('assets/css/app-auth.css') }}?v={{ @filemtime(public_path('assets/css/app-auth.css')) }}" rel="stylesheet" type="text/css" />
+    <link href="{{ asset('assets/css/otogo-tokens.css') }}?v={{ @filemtime(public_path('assets/css/otogo-tokens.css')) }}" rel="stylesheet" type="text/css" />
+    <link href="{{ asset('assets/css/otogo-auth.css') }}?v={{ @filemtime(public_path('assets/css/otogo-auth.css')) }}" rel="stylesheet" type="text/css" />
 
     <style>
         :root {
-            --bs-font-sans-serif: '{{ $brand['font'] }}', system-ui, sans-serif;
-            /* Still artwork behind the animated canvas — also the fallback
-               when the Vanta CDN is unavailable. */
-            --auth-bg-light: url('{{ asset('assets/media/auth/bg11.jpg') }}');
-            --auth-bg-dark: url('{{ asset('assets/media/auth/bg11-dark.jpg') }}');
-        }
-
-        body,
-        .auth-card,
-        .auth-story {
-            font-family: '{{ $brand['font'] }}', system-ui, -apple-system, 'Segoe UI', sans-serif;
+            --bs-font-sans-serif: 'Plus Jakarta Sans', system-ui, sans-serif;
         }
     </style>
 
@@ -66,14 +56,11 @@
     <div class="auth-shell">
         <div class="auth-bg" aria-hidden="true"></div>
 
-        {{-- Animated topology background (Vanta + p5), loaded lazily. --}}
-        {{-- Ground colours match --auth-splash so the preloader, the canvas
-             and the dashboard reveal all share one background. The line
-             colour is a step stronger than the accent, because topology
-             draws very thin strokes. --}}
+        {{-- "Lane flow" canvas drawn locally by app-auth.js (no CDN). Ground
+             colours match --auth-splash; the accent is OtoGo orange. --}}
         <div id="auth-vanta" aria-hidden="true"
-            data-color-light="#4f46e5" data-bg-light="#eef2f8"
-            data-color-dark="#818cf8" data-bg-dark="#0b1120"></div>
+            data-color-light="#ff5a1f" data-bg-light="#f5f3ee"
+            data-color-dark="#ff6a33" data-bg-dark="#0c0e11"></div>
 
         <!--begin::Story panel-->
         <section class="auth-story">
@@ -86,23 +73,25 @@
             </a>
 
             <div>
-                <h1 class="auth-story__headline">Kelola operasional dalam satu panel.</h1>
-                <p class="auth-story__lead">{{ $brand['description'] }}</p>
+                <h1 class="auth-story__headline">Portal pengelola OtoGo.</h1>
+                <p class="auth-story__lead">Ruang kerja tim untuk menjalankan platform bengkel, doorsmeer, dan sparepart di Kota Medan.</p>
 
                 <ul class="auth-story__points">
                     <li>
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>
-                        Manajemen pengguna, peran, dan hak akses granular
+                        Pengguna, peran, dan hak akses per tim
                     </li>
                     <li>
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>
-                        Jejak audit lengkap untuk setiap perubahan data
+                        Konten blog dan asisten AI untuk operasional
                     </li>
                     <li>
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>
-                        Sesi login terpantau dengan proteksi berlapis
+                        Jejak audit untuk setiap perubahan data
                     </li>
                 </ul>
+
+                <div class="auth-story__plate" aria-hidden="true">BK 1 OTO <small>MEDAN</small></div>
             </div>
 
             <p class="auth-story__foot mb-0">

@@ -66,7 +66,12 @@ class UserController extends Controller implements HasMiddleware
     public function getDataUsers(Request $request)
     {
         if ($request->ajax()) {
-            $postsQuery = User::with('roles')->orderBy('created_at', 'desc');
+            // Only the columns the table renders; roles + bans eager loaded so a
+            // page of users costs a fixed number of queries (no N+1).
+            $postsQuery = User::query()
+                ->select(['id', 'name', 'username', 'email', 'avatar', 'last_login', 'last_ip', 'created_at', 'banned_at'])
+                ->with(['roles:id,name', 'bans' => fn ($q) => $q->latest()])
+                ->orderBy('created_at', 'desc');
 
             // --- FIX BAGIAN INI ---
             // Gunakan $request->filterrole agar lebih aman dibanding $_GET
@@ -84,22 +89,23 @@ class UserController extends Controller implements HasMiddleware
                 // Pecah kalimat pencarian berdasarkan spasi
                 $keywords = explode(' ', $searchValue);
 
-                $postsQuery->where(function ($query) use ($keywords) {
+                $like = $postsQuery->getConnection()->getDriverName() === 'pgsql' ? 'ILIKE' : 'LIKE';
+                $keywords = array_filter($keywords, fn ($w) => trim($w) !== '');
+
+                $postsQuery->where(function ($query) use ($keywords, $like) {
                     foreach ($keywords as $word) {
+                        $word = addcslashes($word, '%_\\');
                         // Gunakan where (AND) untuk setiap kata, 
                         // artinya data harus mengandung SEMUA kata yang diketik
-                        $query->where(function ($subQuery) use ($word) {
-                            $subQuery->where('name', 'ILIKE', "%{$word}%")
-                                ->orWhere('nik', 'ILIKE', "%{$word}%")
-                                ->orWhere('email', 'ILIKE', "%{$word}%");
+                        $query->where(function ($subQuery) use ($word, $like) {
+                            $subQuery->where('name', $like, "%{$word}%")
+                                ->orWhere('username', $like, "%{$word}%")
+                                ->orWhere('email', $like, "%{$word}%");
                         });
                     }
                 });
             }
-            $data = $postsQuery->select('*');
-
-            // FIX: Hapus backslash "\" karena sudah di-use di atas
-            return DataTables::of($data)
+            return DataTables::eloquent($postsQuery)
                 ->addIndexColumn()
                 ->addColumn('avatar', function ($row) {
                     if ($row->avatar) {
@@ -108,32 +114,32 @@ class UserController extends Controller implements HasMiddleware
                         return ' <div class="d-flex align-items-center">
                                         <div class="symbol symbol-45px me-5">
 
-                                                <img src="' . asset('storage/user/avatar/' . $row->avatar) . '" alt="' . $row->name . '"  />
+                                                <img src="' . e($row->avatar_display_url) . '" alt="' . e($row->name) . '" loading="lazy" />
 
                                         </div>
                                         <div class="d-flex flex-column">
-                                            <a href="' . route('users.show', $row->id) . '" class="text-gray-800 text-hover-primary mb-1">' . $row->name . '</a>
-                                            <span>' . $row->email . '</span>
+                                            <a href="' . route('users.show', $row->id) . '" class="text-gray-800 text-hover-primary mb-1">' . e($row->name) . '</a>
+                                            <span>' . e($row->email) . '</span>
 
                                         </div>
                                     </div>';
                     } else {
                         // Jika avatar kosong, tampilkan huruf pertama dari nama pengguna
-                        $initial = strtoupper(substr($row->name, 0, 1));
+                        $initial = e(mb_strtoupper(mb_substr((string) $row->name, 0, 1)));
                         return '<div class="d-flex align-items-center">
                                     <div class="symbol symbol-circle symbol-50px overflow-hidden me-3">
                                         <div class="symbol-label fs-3 bg-light-primary text-primary">' . $initial . '</div>
                                     </div>
                                     <div class="d-flex flex-column">
-                                        <a href="' . route('users.show', $row->id) . '" class="text-gray-800 text-hover-primary mb-1">' . $row->name . '</a>
-                                        <span>' . $row->email . '</span>
+                                        <a href="' . route('users.show', $row->id) . '" class="text-gray-800 text-hover-primary mb-1">' . e($row->name) . '</a>
+                                        <span>' . e($row->email) . '</span>
                                     </div>
                                 </div>';
                     }
                 })
 
                 ->addColumn('roles', function ($row) {
-                    $roleNames = $row->getRoleNames(); // Ambil semua role dari user
+                    $roleNames = $row->roles->pluck('name'); // eager loaded
 
                     // Cek apakah user memiliki roles
                     if ($roleNames->isEmpty()) {
@@ -141,7 +147,7 @@ class UserController extends Controller implements HasMiddleware
                     }
 
                     // Jika ada roles, gabungkan menjadi string yang dipisahkan koma
-                    return implode(', ', $roleNames->toArray());
+                    return e(implode(', ', $roleNames->toArray()));
                 })
 
                 ->addColumn('last_login_at', function ($row) {
@@ -153,7 +159,7 @@ class UserController extends Controller implements HasMiddleware
                     }
                 })
                 ->addColumn('last_login_ip', function ($row) {
-                    return '<div class="badge badge-light fw-bold">' . ($row->last_ip ?: 'N/A') . '</div>';
+                    return '<div class="badge badge-light fw-bold">' . e($row->last_ip ?: 'N/A') . '</div>';
                 })
                 ->addColumn('joined_date', function ($row) {
                     if ($row->created_at) {
@@ -209,10 +215,10 @@ class UserController extends Controller implements HasMiddleware
 
                     if ($row->isBanned()) {
                         // Ambil ban terakhir
-                        $ban = $row->bans()->latest()->first();
+                        $ban = $row->bans->first(); // eager loaded, newest first
 
                         // Ban permanent
-                        if (!$ban->expired_at) {
+                        if (! $ban || ! $ban->expired_at) {
                             return '<span class="badge bg-danger">Banned</span>';
                         }
 
@@ -417,16 +423,14 @@ class UserController extends Controller implements HasMiddleware
 
     public function getLoginSession(Request $request, $id)
     {
-        $postsQuery = Activity::with('causer')
+        // Paged in SQL (server-side DataTables); the causer is never rendered.
+        $postsQuery = Activity::query()
+            ->select(['id', 'log_name', 'description', 'properties', 'created_at'])
             ->where('causer_id', $id)
             ->whereIn('log_name', ['login', 'logout'])
             ->orderBy('id', 'desc');
 
-        $data = $postsQuery->get();
-
-
-        // FIX: Hapus backslash "\"
-        return DataTables::of($data)
+        return DataTables::eloquent($postsQuery)
 
             // =============================
             // CREATED_AT
@@ -498,15 +502,14 @@ class UserController extends Controller implements HasMiddleware
     public function getActivity(Request $request, $id)
     {
 
-        $postsQuery = Activity::with('causer')
+        // Paged in SQL (server-side DataTables); the causer is never rendered.
+        $postsQuery = Activity::query()
+            ->select(['id', 'log_name', 'description', 'subject_type', 'subject_id', 'properties', 'created_at'])
             ->where('causer_id', $id)
-            ->whereNotIn('log_name', ['login', 'logout']) // Tambahkan klausa whereNotIn untuk log_name
+            ->whereNotIn('log_name', ['login', 'logout'])
             ->orderBy('id', 'desc');
 
-        $data = $postsQuery->get();
-
-        // FIX: Hapus backslash "\"
-        return DataTables::of($data)
+        return DataTables::eloquent($postsQuery)
 
             // =============================
             // CREATED_AT

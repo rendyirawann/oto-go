@@ -9,11 +9,11 @@
 
     @include('partials.meta')
 
-    <!--begin::Fonts-->
+    <!--begin::Fonts (OtoGo type system: display / text / mono)-->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family={{ str_replace(' ', '+', $brand['font']) }}:wght@300;400;500;600;700;800&display=swap" />
+        href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" />
     <!--end::Fonts-->
 
     <!--begin::Vendor Stylesheets-->
@@ -121,6 +121,10 @@
             }
         }
     </style>
+
+    {{-- OtoGo skin: after the inline shell rules so the brand palette wins. --}}
+    <link href="{{ asset('assets/css/otogo-tokens.css') }}?v={{ @filemtime(public_path('assets/css/otogo-tokens.css')) }}" rel="stylesheet" type="text/css" />
+    <link href="{{ asset('assets/css/otogo-admin.css') }}?v={{ @filemtime(public_path('assets/css/otogo-admin.css')) }}" rel="stylesheet" type="text/css" />
 
     <script>
         // Click-jacking backstop for browsers that ignore X-Frame-Options.

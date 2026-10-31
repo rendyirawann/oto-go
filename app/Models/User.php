@@ -125,6 +125,12 @@ class User extends Authenticatable implements BannableContract
         return Str::upper($initials);
     }
 
+    /** Vehicles registered by this customer (mobile app). */
+    public function vehicles(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(CustomerVehicle::class);
+    }
+
     /** Primary role name for display purposes. */
     public function getRoleLabelAttribute(): string
     {

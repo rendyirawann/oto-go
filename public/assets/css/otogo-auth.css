@@ -1,0 +1,157 @@
+/* ==========================================================================
+   OtoGo skin for the sign-in screens (loaded after app-auth.css).
+   Paper/ink palette, the lane-flow canvas instead of a stock photo, display
+   type for the story panel, and the orange signal colour for actions.
+   ========================================================================== */
+
+:root {
+    --auth-ink: #111418;
+    --auth-muted: rgba(17, 20, 24, .7);
+    --auth-faint: rgba(17, 20, 24, .5);
+    --auth-glass: rgba(255, 255, 255, .86);
+    --auth-line: rgba(17, 20, 24, .12);
+    --auth-splash: #f5f3ee;
+    --auth-field: #ffffff;
+    --auth-field-hover: #ffffff;
+    --auth-panel-veil: rgba(245, 243, 238, .25);
+    --auth-autofill: #ffffff;
+    --auth-scrim: linear-gradient(100deg, rgba(245, 243, 238, .9) 0%, rgba(245, 243, 238, .55) 38%, rgba(245, 243, 238, 0) 70%);
+    --auth-vanta-scrim: linear-gradient(100deg, rgba(245, 243, 238, .86) 0%, rgba(245, 243, 238, .5) 32%, rgba(245, 243, 238, 0) 60%);
+    --auth-bg-light: none;
+    --auth-bg-dark: none;
+}
+
+[data-bs-theme="dark"] {
+    --auth-ink: #edeae3;
+    --auth-muted: rgba(237, 234, 227, .72);
+    --auth-faint: rgba(237, 234, 227, .5);
+    --auth-glass: rgba(21, 25, 30, .88);
+    --auth-line: rgba(237, 234, 227, .12);
+    --auth-splash: #0c0e11;
+    --auth-field: #111418;
+    --auth-field-hover: #15191e;
+    --auth-panel-veil: rgba(12, 14, 17, .3);
+    --auth-autofill: #15191e;
+    --auth-scrim: linear-gradient(100deg, rgba(12, 14, 17, .9) 0%, rgba(12, 14, 17, .5) 38%, rgba(12, 14, 17, 0) 70%);
+    --auth-vanta-scrim: linear-gradient(100deg, rgba(12, 14, 17, .88) 0%, rgba(12, 14, 17, .5) 32%, rgba(12, 14, 17, 0) 60%);
+}
+
+body.auth-body,
+.auth-card,
+.auth-story {
+    font-family: var(--og-font-body);
+}
+
+/* Still ground: paper with faint lane dashes, shown before / without the canvas. */
+.auth-bg {
+    background-color: var(--auth-splash);
+    background-image:
+        repeating-linear-gradient(90deg, rgba(17, 20, 24, .06) 0 22px, transparent 22px 48px);
+    background-size: 100% 2px;
+    background-repeat: repeat-y;
+    background-position: 0 0;
+}
+
+[data-bs-theme="dark"] .auth-bg {
+    background-image:
+        repeating-linear-gradient(90deg, rgba(237, 234, 227, .06) 0 22px, transparent 22px 48px);
+}
+
+.auth-bg::after {
+    background: var(--auth-scrim);
+}
+
+/* Story panel */
+.auth-story__name,
+.auth-story__headline,
+.auth-card__title {
+    font-family: var(--og-font-display);
+    letter-spacing: -0.03em;
+}
+
+.auth-story__headline {
+    font-weight: 700;
+    text-wrap: balance;
+}
+
+.auth-story__tagline {
+    font-family: var(--og-font-mono);
+    font-size: .7rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.auth-story__logo,
+.auth-card__brand img {
+    border-radius: 12px;
+}
+
+.auth-story__points svg {
+    stroke: var(--og-orange);
+}
+
+.auth-story__plate {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 28px;
+    padding: 8px 14px;
+    border-radius: 10px;
+    background: #111418;
+    color: #f5f3ee;
+    box-shadow: inset 0 0 0 2px #111418, inset 0 0 0 3px rgba(245, 243, 238, .7);
+    font-family: var(--og-font-mono);
+    font-weight: 700;
+    letter-spacing: .14em;
+    font-size: .9rem;
+}
+
+.auth-story__plate small {
+    font-weight: 500;
+    letter-spacing: .04em;
+    opacity: .7;
+    font-size: .68rem;
+}
+
+/* Card */
+.auth-card {
+    border-radius: 22px;
+    border: 1px solid var(--auth-line);
+    box-shadow: 0 1px 0 rgba(17, 20, 24, .04), 0 24px 60px -28px rgba(17, 20, 24, .35);
+}
+
+.auth-input {
+    border-radius: 12px;
+}
+
+.auth-submit {
+    background: #ff5a1f;
+    color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 1px 0 rgba(17, 20, 24, .12), 0 12px 28px -14px rgba(255, 90, 31, .8);
+    font-weight: 700;
+    letter-spacing: -0.005em;
+}
+
+.auth-submit:hover {
+    background: #e64a12;
+}
+
+[data-bs-theme="dark"] .auth-submit {
+    color: #111418;
+}
+
+.auth-card a,
+.auth-foot a {
+    color: var(--og-orange-text);
+}
+
+/* Preloader + progress ring follow the brand. */
+.auth-preloader__label {
+    font-family: var(--og-font-display);
+    letter-spacing: -0.02em;
+}
+
+.auth-preloader__bar span {
+    background: #ff5a1f;
+}

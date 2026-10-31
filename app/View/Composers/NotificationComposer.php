@@ -27,7 +27,7 @@ class NotificationComposer
             return;
         }
 
-        $query = Activity::query()->with('causer')->latest();
+        $query = Activity::query()->with('causer:id,name')->latest();
 
         if (! $user->hasRole(['Superadmin', 'superadmin'])) {
             $query->where('causer_id', $user->getKey());

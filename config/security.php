@@ -35,7 +35,7 @@ return [
     |
     */
 
-    'hsts' => env('SECURITY_HSTS', false),
+    'hsts' => env('SECURITY_HSTS', env('APP_ENV') === 'production'),
 
     /*
     |--------------------------------------------------------------------------

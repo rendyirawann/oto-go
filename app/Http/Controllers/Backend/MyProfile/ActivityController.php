@@ -29,13 +29,14 @@ class ActivityController extends Controller
 {
     $userId = Auth::id();
     
-    $data = Activity::with('causer')
+    // Paged and sorted in SQL; the causer relation is never rendered here.
+    $data = Activity::query()
+        ->select(['id', 'log_name', 'description', 'subject_type', 'subject_id', 'properties', 'created_at'])
         ->where('causer_id', $userId)
         ->whereNotIn('log_name', ['login', 'logout'])
-        ->orderBy('created_at', 'desc')
-        ->get();
+        ->orderBy('created_at', 'desc');
 
-    return datatables()->of($data)
+    return datatables()->eloquent($data)
 
         // =============================
         // CREATED_AT

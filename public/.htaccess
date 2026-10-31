@@ -5,6 +5,9 @@
 
     RewriteEngine On
 
+    # Never serve dotfiles (.env, .git, .htpasswd ...) except ACME challenges.
+    RewriteRule (^|/)\.(?!well-known/) - [F,L]
+
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
@@ -22,4 +25,51 @@
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
+</IfModule>
+
+# ---------------------------------------------------------------------------
+# Static files are served by Apache directly (never through PHP), so they get
+# their baseline hardening here. HTML pages receive the full header set
+# (CSP, HSTS, ...) from App\Http\Middleware\SecurityHeaders.
+# No Cross-Origin-Resource-Policy on purpose: blog covers and the logo must
+# stay embeddable by the mobile web app on another origin.
+# ---------------------------------------------------------------------------
+<IfModule mod_headers.c>
+    <FilesMatch "\.(?:css|js|mjs|map|json|webmanifest|svg|png|jpe?g|gif|webp|avif|ico|woff2?|ttf|otf|eot|txt|xml|pdf)$">
+        Header set X-Content-Type-Options "nosniff"
+        Header set Referrer-Policy "strict-origin-when-cross-origin"
+        Header unset X-Powered-By
+    </FilesMatch>
+
+    # Fonts may be requested cross-origin by browsers (CORS mode).
+    <FilesMatch "\.(?:woff2?|ttf|otf|eot)$">
+        Header set Access-Control-Allow-Origin "*"
+    </FilesMatch>
+</IfModule>
+
+<IfModule mod_mime.c>
+    AddType application/manifest+json webmanifest
+    AddType image/svg+xml svg
+    AddType font/woff2 woff2
+</IfModule>
+
+# Browser caching. Assets are not fingerprinted, so CSS/JS stay short and
+# revalidate; images and fonts can live longer.
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css "access plus 1 day"
+    ExpiresByType application/javascript "access plus 1 day"
+    ExpiresByType text/javascript "access plus 1 day"
+    ExpiresByType image/svg+xml "access plus 30 days"
+    ExpiresByType image/png "access plus 30 days"
+    ExpiresByType image/jpeg "access plus 30 days"
+    ExpiresByType image/webp "access plus 30 days"
+    ExpiresByType image/x-icon "access plus 30 days"
+    ExpiresByType image/vnd.microsoft.icon "access plus 30 days"
+    ExpiresByType font/woff2 "access plus 1 year"
+    ExpiresByType application/manifest+json "access plus 1 day"
+</IfModule>
+
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/css text/plain text/xml application/javascript application/json application/manifest+json image/svg+xml
 </IfModule>

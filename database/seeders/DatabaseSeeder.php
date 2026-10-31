@@ -18,6 +18,9 @@ class DatabaseSeeder extends Seeder
         $this->call([
             RolePermissionSeeder::class,
             SuperAdminSeeder::class,
+            MasterVehicleSeeder::class,
+            ServiceAreaSeeder::class,
+            MedanPriceTemplateSeeder::class,
         ]);
     }
 }

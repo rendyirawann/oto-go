@@ -29,7 +29,9 @@ class BlockSuspiciousRequests
         '/\bdrop\s+table\b/i',
         '/\binto\s+(?:out|dump)file\b/i',
         '/\bor\b\s+["\']?\d+["\']?\s*=\s*["\']?\d+/i',
-        '/(?:--|#|\/\*)\s*$/',
+        // Quote followed by a SQL comment ("' --", "'#", "'/*"); a bare trailing
+        // "--" is too common in normal searches (e.g. "10W-40--") to block.
+        '/[\'"]\s*(?:--|#|\/\*)/',
 
         // Path traversal and local file probes
         '#(?:\.\./){2,}#',
