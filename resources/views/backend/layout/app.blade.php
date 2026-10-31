@@ -253,6 +253,9 @@
     <!--end::Javascript-->
 
     @include('partials._rt')
+
+    {{-- Floating AI agent (rendered only when the module is installed). --}}
+    @includeIf('backend.ai.widget')
 </body>
 
 </html>

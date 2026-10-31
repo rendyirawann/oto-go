@@ -1,0 +1,80 @@
+/*
+ * OtoGo design tokens - shared by the public site, the blog and the admin portal.
+ *
+ * Palette: warm "paper" neutrals, near-black "ink", one signal colour (OtoGo
+ * orange) and a lane-marking yellow used sparingly. Type: Bricolage Grotesque
+ * for display, Plus Jakarta Sans for text, JetBrains Mono for prices, plates
+ * and data. Load the fonts with:
+ *
+ * https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap
+ */
+
+:root {
+    /* Neutrals */
+    --og-ink: #111418;
+    --og-ink-2: #2a2f36;
+    --og-ink-3: #4a5059;
+    --og-muted: #6b6f76;
+    --og-line: #dedad0;
+    --og-line-soft: #ebe7de;
+    --og-paper: #f5f3ee;
+    --og-paper-2: #ece8df;
+    --og-surface: #ffffff;
+
+    /* Brand */
+    --og-orange: #ff5a1f;
+    --og-orange-press: #e64a12;
+    --og-orange-text: #c2410c;   /* orange for text on light surfaces (AA) */
+    --og-orange-soft: #ffe8de;
+    --og-yellow: #ffc531;        /* lane marking - accents only */
+    --og-green: #15803d;
+    --og-green-soft: #dcfce7;
+    --og-red: #dc2626;
+
+    /* Type */
+    --og-font-display: 'Bricolage Grotesque', 'Plus Jakarta Sans', system-ui, sans-serif;
+    --og-font-body: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --og-font-mono: 'JetBrains Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+
+    /* Shape & depth */
+    --og-radius-sm: 10px;
+    --og-radius: 14px;
+    --og-radius-lg: 22px;
+    --og-radius-xl: 32px;
+    --og-shadow-1: 0 1px 0 rgba(17, 20, 24, .04), 0 1px 3px rgba(17, 20, 24, .06);
+    --og-shadow-2: 0 2px 0 rgba(17, 20, 24, .03), 0 12px 32px -12px rgba(17, 20, 24, .18);
+
+    /* Motion */
+    --og-ease: cubic-bezier(.2, .7, .2, 1);
+    --og-ease-out: cubic-bezier(.16, 1, .3, 1);
+    --og-dur-1: 160ms;
+    --og-dur-2: 320ms;
+    --og-dur-3: 640ms;
+}
+
+/* Dark: tokens follow the admin's data-bs-theme switch and the OS preference. */
+[data-bs-theme="dark"],
+[data-theme="dark"] {
+    --og-ink: #edeae3;
+    --og-ink-2: #d4d0c7;
+    --og-ink-3: #a9a59c;
+    --og-muted: #8b8f96;
+    --og-line: #2a2f36;
+    --og-line-soft: #20252b;
+    --og-paper: #0c0e11;
+    --og-paper-2: #14181d;
+    --og-surface: #15191e;
+    --og-orange-text: #ff7a45;
+    --og-orange-soft: #2d1a12;
+    --og-green-soft: #0f2a1a;
+    --og-shadow-1: 0 1px 0 rgba(0, 0, 0, .4);
+    --og-shadow-2: 0 12px 32px -12px rgba(0, 0, 0, .6);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    :root {
+        --og-dur-1: 0ms;
+        --og-dur-2: 0ms;
+        --og-dur-3: 0ms;
+    }
+}

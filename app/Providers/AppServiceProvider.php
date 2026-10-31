@@ -87,6 +87,10 @@ class AppServiceProvider extends ServiceProvider
 
         RateLimiter::for('password', fn (Request $request) => Limit::perMinute($limits['password'])
             ->by(strtolower((string) $request->input('email')) . '|' . $request->ip()));
+
+        // AI chat costs money per call: per-user budget, generous for real use.
+        RateLimiter::for('ai', fn (Request $request) => Limit::perMinute((int) config('ai.rate_limit', env('AI_RATE_LIMIT', 30)))
+            ->by('ai|' . ($request->user()?->id ?: $request->ip())));
     }
 
     /** Expose settings + resolved brand identity to every view. */

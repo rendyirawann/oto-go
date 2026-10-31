@@ -11,12 +11,12 @@ use Cog\Laravel\Ban\Traits\Bannable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids; // 1. Ini penawar errornya
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable implements BannableContract
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    // 2. Masukkan HasUuids ke dalam use
-    use HasFactory, Notifiable, HasRoles, Bannable, HasUuids;
+    use HasApiTokens, HasFactory, Notifiable, HasRoles, Bannable, HasUuids;
 
     /**
      * The attributes that are mass assignable.

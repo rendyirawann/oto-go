@@ -19,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
             'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
             'forbid-banned-user' => \Cog\Laravel\Ban\Http\Middleware\ForbidBannedUser::class,
+            'backoffice' => \App\Http\Middleware\EnsureBackofficeAccess::class,
         ]);
 
         // Runs on every request, including assets served through PHP:
@@ -53,6 +54,18 @@ return Application::configure(basePath: dirname(__DIR__))
         }
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        // Never leak stack traces or SQL through an XHR response.
-        $exceptions->dontReport([]);
+        // The API (and anything asking for JSON) always gets JSON errors,
+        // never an HTML error page - the mobile app depends on it.
+        $exceptions->shouldRenderJsonWhen(
+            fn (\Illuminate\Http\Request $request) => $request->is('api/*') || $request->expectsJson()
+        );
+
+        // Unknown API routes: a clear JSON 404 instead of a generic page.
+        $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\NotFoundHttpException $e, \Illuminate\Http\Request $request) {
+            if ($request->is('api/*')) {
+                return response()->json(['message' => 'Endpoint atau data tidak ditemukan.'], 404);
+            }
+
+            return null;
+        });
     })->create();

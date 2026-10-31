@@ -32,17 +32,17 @@ class Brand
     public static function compute(): array
     {
         $settings = self::settings();
-        $name = self::clean($settings['site_name'] ?? null) ?: config('app.name', 'StarterTemp');
+        $name = self::clean($settings['site_name'] ?? null) ?: config('app.name', 'OtoGo');
 
         return [
             'name' => $name,
             'short_name' => self::clean($settings['site_short_name'] ?? null) ?: Str::limit($name, 12, ''),
-            'tagline' => self::clean($settings['site_tagline'] ?? null) ?: 'Modern Admin Dashboard',
+            'tagline' => self::clean($settings['site_tagline'] ?? null) ?: 'Bengkel, doorsmeer & sparepart dalam satu aplikasi',
             'description' => self::clean($settings['site_description'] ?? null)
-                ?: $name . ' — panel administrasi modern untuk mengelola pengguna, hak akses, dan operasional aplikasi.',
-            'keywords' => self::clean($settings['site_keywords'] ?? null) ?: Str::lower($name) . ', admin panel, dashboard',
-            'author' => self::clean($settings['site_author'] ?? null) ?: 'Rendy Irawan',
-            'robots' => self::clean($settings['seo_robots'] ?? null) ?: 'noindex, nofollow',
+                ?: $name . ' menghubungkan pemilik kendaraan di Kota Medan dengan bengkel, doorsmeer, dan toko sparepart terpercaya.',
+            'keywords' => self::clean($settings['site_keywords'] ?? null) ?: Str::lower($name) . ', bengkel medan, doorsmeer medan, sparepart medan',
+            'author' => self::clean($settings['site_author'] ?? null) ?: 'Core Technology Indonesia',
+            'robots' => self::clean($settings['seo_robots'] ?? null) ?: 'index, follow',
             'twitter' => self::clean($settings['seo_twitter_handle'] ?? null),
             'google_verification' => self::clean($settings['seo_google_verification'] ?? null),
             'theme_color' => self::color($settings['site_theme_color'] ?? null),
@@ -51,11 +51,14 @@ class Brand
             'logo_url' => self::assetUrl($settings['site_logo'] ?? null, 'assets/media/branding/logo-mark.svg'),
             'favicon_url' => self::assetUrl($settings['site_favicon'] ?? null, 'assets/media/branding/favicon.ico'),
             'favicon_png_url' => self::publicUrl('assets/media/branding/favicon-32.png'),
+            'favicon_svg_url' => self::publicUrl('assets/media/branding/favicon.svg'),
+            'logo_full_url' => self::publicUrl('assets/media/branding/logo-full.svg'),
+            'logo_full_light_url' => self::publicUrl('assets/media/branding/logo-full-light.svg'),
             'apple_icon_url' => self::publicUrl('assets/media/branding/apple-touch-icon.png'),
             'manifest_url' => self::publicUrl('assets/media/branding/site.webmanifest'),
             'og_image_url' => self::assetUrl($settings['site_og_image'] ?? null, 'assets/media/branding/og-image.png'),
 
-            'owner' => self::clean($settings['footer_owner'] ?? null) ?: 'Rendy Irawan',
+            'owner' => self::clean($settings['footer_owner'] ?? null) ?: 'Core Technology Indonesia',
             'github' => self::url($settings['footer_github'] ?? null) ?: 'https://github.com/rendyirawann',
             'linkedin' => self::url($settings['footer_linkedin'] ?? null) ?: 'https://linkedin.com/in/rendyirawann',
             'font' => self::clean($settings['site_font'] ?? null) ?: 'Plus Jakarta Sans',
@@ -156,7 +159,7 @@ class Brand
                 self::clean(self::settings()['site_name'] ?? null) ?: config('app.name', 'App')
             )['primary'];
         } catch (\Throwable) {
-            return '#4f46e5';
+            return BrandingService::COLORS['primary'];
         }
     }
 }

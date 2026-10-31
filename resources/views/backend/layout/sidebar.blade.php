@@ -116,6 +116,36 @@
                 </div>
             </div>
 
+            @if (Route::has('admin.posts.index') || Route::has('admin.ai.index'))
+                <div class="menu-item pt-5">
+                    <div class="menu-content">
+                        <span class="menu-heading fw-bold text-uppercase fs-7">Konten &amp; AI</span>
+                    </div>
+                </div>
+
+                @if (Route::has('admin.posts.index'))
+                    <div class="menu-item">
+                        <a class="menu-link {{ request()->routeIs('admin.posts.*') ? 'active' : '' }}" href="{{ route('admin.posts.index') }}">
+                            <span class="menu-icon">
+                                <i class="ki-duotone ki-message-text-2 fs-3"><span class="path1"></span><span class="path2"></span><span class="path3"></span></i>
+                            </span>
+                            <span class="menu-title">Blog</span>
+                        </a>
+                    </div>
+                @endif
+
+                @if (Route::has('admin.ai.index'))
+                    <div class="menu-item">
+                        <a class="menu-link {{ request()->routeIs('admin.ai.*') ? 'active' : '' }}" href="{{ route('admin.ai.index') }}">
+                            <span class="menu-icon">
+                                <i class="ki-duotone ki-abstract-26 fs-3"><span class="path1"></span><span class="path2"></span></i>
+                            </span>
+                            <span class="menu-title">Asisten AI</span>
+                        </a>
+                    </div>
+                @endif
+            @endif
+
             <div class="menu-item pt-5">
                 <div class="menu-content">
                     <span class="menu-heading fw-bold text-uppercase fs-7">Sistem</span>

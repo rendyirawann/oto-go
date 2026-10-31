@@ -53,6 +53,29 @@
         </div>
     @endrole
 
+    {{-- Feature modules: shown only once their routes are registered. --}}
+    @if (Route::has('admin.posts.index'))
+        <div class="menu-item me-lg-2 {{ request()->routeIs('admin.posts.*') ? 'here show menu-here-bg' : '' }}">
+            <a class="menu-link py-3" href="{{ route('admin.posts.index') }}">
+                <span class="menu-icon">
+                    <i class="ki-duotone ki-message-text-2 fs-3"><span class="path1"></span><span class="path2"></span><span class="path3"></span></i>
+                </span>
+                <span class="menu-title">Blog</span>
+            </a>
+        </div>
+    @endif
+
+    @if (Route::has('admin.ai.index'))
+        <div class="menu-item me-lg-2 {{ request()->routeIs('admin.ai.*') ? 'here show menu-here-bg' : '' }}">
+            <a class="menu-link py-3" href="{{ route('admin.ai.index') }}">
+                <span class="menu-icon">
+                    <i class="ki-duotone ki-abstract-26 fs-3"><span class="path1"></span><span class="path2"></span></i>
+                </span>
+                <span class="menu-title">Asisten AI</span>
+            </a>
+        </div>
+    @endif
+
     {{-- Every role can open this; the controller scopes what they see. --}}
     <div class="menu-item me-lg-2 {{ request()->is('admin/log-activity*') ? 'here show menu-here-bg' : '' }}">
         <a class="menu-link py-3" href="{{ route('log-activity.index') }}">

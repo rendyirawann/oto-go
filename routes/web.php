@@ -26,10 +26,11 @@ use App\Http\Controllers\Backend\Settings\SettingController;
 |--------------------------------------------------------------------------
 */
 
-// The app has no public front page — everything lives behind the admin login.
-Route::redirect('/', '/admin/login');
+// Public website: landing page, blog, sitemap (see routes/frontend.php).
+require __DIR__ . '/frontend.php';
 
-Route::middleware(['auth', 'forbid-banned-user'])->group(function () {
+// Admin portal. "backoffice" signs out customer accounts that try to use it.
+Route::middleware(['auth', 'forbid-banned-user', 'backoffice'])->group(function () {
 
     // --- Dashboard (every authenticated role) ---
     Route::get('/admin/dashboard', [DashboardAdminController::class, 'index'])->name('dashboard');
@@ -105,5 +106,9 @@ Route::middleware(['auth', 'forbid-banned-user'])->group(function () {
         Route::get('/admin/get-datarole', [RoleController::class, 'getDataRoles'])->name('get-datarole');
     });
 });
+
+// Feature modules, each in its own file.
+require __DIR__ . '/admin-blog.php';
+require __DIR__ . '/ai.php';
 
 require __DIR__ . '/auth.php';

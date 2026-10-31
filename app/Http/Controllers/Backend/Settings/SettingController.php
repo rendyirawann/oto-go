@@ -110,7 +110,7 @@ class SettingController extends Controller
             ->with('success', 'Pengaturan berhasil diperbarui.');
     }
 
-    /** Rebuild the logo/favicon/OG artwork from the current application name. */
+    /** Restore the logo/favicon/OG artwork from the committed brand kit. */
     public function regenerateBranding(Request $request, BrandingService $branding): RedirectResponse
     {
         $name = Setting::get('site_name', config('app.name', 'App'));
@@ -126,13 +126,13 @@ class SettingController extends Controller
 
         ActivityRecorder::log(
             'pengaturan aplikasi',
-            'Membuat ulang logo & favicon dari nama aplikasi "' . $name . '"',
+            'Memulihkan logo, favicon & OG image dari brand kit OtoGo',
             ['new' => $assets],
         );
 
         return redirect()
             ->route('settings.index')
-            ->with('success', 'Logo, favicon dan OG image berhasil dibuat ulang dari nama aplikasi.');
+            ->with('success', 'Logo, favicon dan OG image berhasil dipulihkan dari brand kit.');
     }
 
     /**
