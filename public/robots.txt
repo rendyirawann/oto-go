@@ -1,0 +1,6 @@
+# Internal admin panel — nothing here is meant for search engines.
+# The per-page directive is managed in Settings › SEO & Meta (seo_robots);
+# keep the two in agreement if you ever open part of the app to the public.
+
+User-agent: *
+Disallow: /

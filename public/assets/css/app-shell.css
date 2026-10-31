@@ -1,0 +1,408 @@
+/* ==========================================================================
+   App shell — layout, branding and shared UI written on top of Metronic.
+   Loaded after style.bundle.css so these rules win without !important
+   except where Metronic itself uses a hard-coded max-width.
+   ========================================================================== */
+
+:root {
+    --app-gutter: clamp(12px, 2.4vw, 40px);
+    --app-header-h: 66px;
+    --app-radius: 14px;
+}
+
+/* --------------------------------------------------------------------------
+   1. Full-bleed layout
+   Metronic caps every container at 1320px. Release that cap so the shell
+   uses the whole viewport at any resolution, with a fluid side gutter.
+   -------------------------------------------------------------------------- */
+
+.container,
+.container-sm,
+.container-md,
+.container-lg,
+.container-xl,
+.container-xxl,
+.container-fluid {
+    max-width: 100% !important;
+    width: 100%;
+    padding-inline: var(--app-gutter);
+    margin-inline: auto;
+}
+
+html,
+body {
+    max-width: 100%;
+}
+
+body {
+    /* Stops a wide table or chart from scrolling the whole page sideways. */
+    overflow-x: hidden;
+}
+
+.wrapper,
+.page,
+#kt_content_container,
+#kt_content {
+    min-width: 0;
+    width: 100%;
+}
+
+/* Anything genuinely wider than the viewport scrolls inside its own box. */
+.table-responsive,
+.dataTables_wrapper,
+.app-scroll-x {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+img,
+svg,
+video,
+canvas {
+    max-width: 100%;
+}
+
+/* --------------------------------------------------------------------------
+   2. Header
+   -------------------------------------------------------------------------- */
+
+.app-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    min-width: 0;
+}
+
+.app-brand__mark {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+.app-brand__name {
+    font-weight: 800;
+    font-size: 1.15rem;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    color: var(--bs-gray-900);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.app-brand__tagline {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--bs-gray-500);
+    letter-spacing: 0.01em;
+}
+
+/* The name would crowd the toolbar on small phones; the mark still shows. */
+@media (max-width: 400px) {
+    .app-brand__name {
+        max-width: 108px;
+        font-size: 1rem;
+    }
+
+    .app-brand__tagline {
+        display: none;
+    }
+}
+
+.app-topbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+@media (min-width: 992px) {
+    .app-topbar {
+        gap: 12px;
+    }
+}
+
+/* --------------------------------------------------------------------------
+   3. Avatar with initials fallback
+   -------------------------------------------------------------------------- */
+
+.app-avatar {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    overflow: hidden;
+    border-radius: 50%;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: 0.02em;
+    color: #fff;
+    background: linear-gradient(135deg, var(--bs-primary), var(--bs-info));
+    user-select: none;
+}
+
+.app-avatar img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.app-avatar--square {
+    border-radius: 12px;
+}
+
+/* --------------------------------------------------------------------------
+   4. Notifications
+   -------------------------------------------------------------------------- */
+
+.app-notif-dot {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--bs-danger);
+    box-shadow: 0 0 0 2px var(--bs-body-bg);
+}
+
+.app-notif-list {
+    max-height: min(420px, 60vh);
+    overflow-y: auto;
+}
+
+.app-notif-item {
+    display: flex;
+    gap: 12px;
+    padding: 10px 14px;
+    text-decoration: none;
+    border-radius: 10px;
+    transition: background-color 0.15s ease;
+}
+
+.app-notif-item:hover {
+    background: var(--bs-gray-100);
+}
+
+.app-notif-item__icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+/* --------------------------------------------------------------------------
+   5. Footer
+   -------------------------------------------------------------------------- */
+
+.app-footer {
+    padding-block: 18px;
+    border-top: 1px solid var(--bs-gray-200);
+    margin-top: auto;
+}
+
+.app-footer__inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px 18px;
+}
+
+.app-footer__social {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.app-footer__social a {
+    width: 34px;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    color: var(--bs-gray-600);
+    border: 1px solid var(--bs-gray-300);
+    transition: color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.app-footer__social a:hover {
+    color: var(--bs-primary);
+    border-color: var(--bs-primary);
+    transform: translateY(-2px);
+}
+
+.app-footer__social svg {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+}
+
+@media (max-width: 575.98px) {
+    .app-footer__inner {
+        justify-content: center;
+        text-align: center;
+    }
+}
+
+/* --------------------------------------------------------------------------
+   6. Page reveal — the shatter that plays once after login
+   -------------------------------------------------------------------------- */
+
+/* The overlay matches the sign-in screen's ground so the hand-off between
+   the two pages reads as one continuous motion. */
+#app-reveal {
+    --app-reveal-bg: #eef2f8;
+    --app-reveal-tile: #e2e8f4;
+    --app-reveal-p1: #6366f1;
+    --app-reveal-p2: #d946ef;
+
+    position: fixed;
+    inset: 0;
+    z-index: 20000;
+    pointer-events: none;
+    /* Stays opaque for the whole sequence — the dashboard is only uncovered
+       once the cube has wound down, then this fades away. */
+    background: var(--app-reveal-bg);
+    opacity: 1;
+    transition: opacity 340ms ease;
+    /* Failsafe: if JS never runs, the overlay still gets out of the way. */
+    animation: app-reveal-failsafe 500ms 1400ms forwards;
+}
+
+#app-reveal.is-clearing {
+    opacity: 0;
+}
+
+[data-bs-theme="dark"] #app-reveal {
+    --app-reveal-bg: #0b1120;
+    --app-reveal-tile: #172038;
+    --app-reveal-p1: #818cf8;
+    --app-reveal-p2: #e879f9;
+}
+
+@keyframes app-reveal-failsafe {
+    to {
+        opacity: 0;
+        visibility: hidden;
+    }
+}
+
+/* Stage 1 — the solid ground breaks into tiles that fly apart. */
+#app-reveal .app-reveal__grid {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    /* The seam lets the ground show through, so the wall of tiles is visible
+       before it breaks. */
+    gap: 2px;
+}
+
+#app-reveal .app-reveal__tile {
+    background: var(--app-reveal-tile);
+    will-change: transform, opacity;
+    transform-origin: center;
+    animation: app-tile-out var(--app-tile-dur, 460ms) cubic-bezier(0.5, 0, 0.75, 0) both;
+}
+
+@keyframes app-tile-out {
+    0% {
+        opacity: 1;
+        transform: scale(1) rotate(0deg);
+        filter: blur(0);
+    }
+    35% {
+        opacity: 1;
+        transform: scale(1.03) rotate(var(--app-tile-rot, 4deg));
+    }
+    100% {
+        opacity: 0;
+        transform: scale(0.25) rotate(var(--app-tile-rot, 4deg)) translate3d(var(--app-tile-x, 0), var(--app-tile-y, -40px), 0);
+        filter: blur(3px);
+    }
+}
+
+/* Stages 2-4 — the debris becomes circles that spiral inward, assemble into
+   a rotating cube, then wind down to a point. Drawn on one canvas. */
+#app-reveal .app-reveal__canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+/* --------------------------------------------------------------------------
+   7. Misc polish
+   -------------------------------------------------------------------------- */
+
+.app-stat-card {
+    height: 100%;
+}
+
+.app-stat-card__icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+/* Diff view used by the activity-log detail modal and page.
+   Selectors are written to out-specify Bootstrap's
+   `.table > :not(caption) > * > *` colour rule. */
+.app-diff-row--changed {
+    background: rgba(241, 65, 108, 0.06);
+}
+
+.table > :not(caption) > * > td.app-diff-old,
+.app-diff-old {
+    color: var(--bs-danger);
+    text-decoration: line-through;
+    word-break: break-word;
+}
+
+.table > :not(caption) > * > td.app-diff-new,
+.app-diff-new {
+    color: var(--bs-success);
+    word-break: break-word;
+}
+
+.app-diff-key {
+    font-weight: 600;
+    word-break: break-word;
+}
+
+[data-bs-theme="dark"] .app-notif-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+[data-bs-theme="dark"] .app-footer {
+    border-top-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-bs-theme="dark"] .app-footer__social a {
+    border-color: rgba(255, 255, 255, 0.14);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #app-reveal .app-reveal__tile,
+    .app-footer__social a,
+    .app-notif-item {
+        animation-duration: 1ms !important;
+        transition: none !important;
+    }
+}
