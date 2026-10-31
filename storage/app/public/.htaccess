@@ -1,0 +1,17 @@
+# Anti-webshell — dipasang 2026-10-22
+# Folder ini menerima berkas unggahan, jadi isinya tidak boleh pernah
+# dieksekusi sebagai PHP. Hanya eksekusi yang dicegah: gambar, PDF, dokumen,
+# dan berkas lain di folder ini TETAP dapat diakses seperti biasa.
+#
+# Memakai FilesMatch, bukan RewriteRule, karena aturan rewrite induk dibuang
+# Apache begitu .htaccess anak mendefinisikan RewriteEngine sendiri.
+<FilesMatch "\.(php|phtml|phps|php[0-9]|phar|inc|hphp|ctp)$">
+    Require all denied
+</FilesMatch>
+
+# Jangan jalankan lewat handler apa pun, termasuk yang didaftarkan modul lain.
+<IfModule mod_php.c>
+    php_flag engine off
+</IfModule>
+RemoveHandler .php .phtml .phps .phar .inc
+RemoveType .php .phtml .phps .phar .inc

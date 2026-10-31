@@ -18,7 +18,10 @@ Pemilik usaha mendaftarkan usaha dan outletnya, memilih modul yang ingin dibuka,
 - [Instalasi Lokal](#instalasi-lokal)
 - [Konfigurasi Environment](#konfigurasi-environment)
 - [Menjalankan Aplikasi](#menjalankan-aplikasi)
+- [Dokumentasi API](#dokumentasi-api)
+- [Aplikasi Mobile](#aplikasi-mobile)
 - [Testing](#testing)
+- [Status Implementasi](#status-implementasi)
 - [Struktur Folder](#struktur-folder)
 - [Roadmap](#roadmap)
 - [Lisensi](#lisensi)
@@ -88,6 +91,13 @@ Pemilik usaha mendaftarkan usaha dan outletnya, memilih modul yang ingin dibuka,
 
 ---
 
+> **Catatan versi yang terpasang saat ini** (lihat [Status Implementasi](#status-implementasi)):
+> Laravel **12.50** (upgrade ke 13 direncanakan), panel admin memakai Blade + Metronic dengan skin OtoGo
+> (Filament direncanakan), queue memakai `queue:work` di Redis (Horizon butuh ekstensi `pcntl` yang tidak ada
+> di Windows), dan test memakai PHPUnit (Pest direncanakan). Redis memakai klien `predis`.
+
+---
+
 ## Arsitektur Singkat
 
 - **Multi-tenant shared database**: semua usaha berada dalam satu database PostgreSQL, data dipisahkan dengan kolom `business_id` dan global scope. Pendekatan ini dipilih karena pelanggan perlu mencari layanan lintas usaha (model marketplace).
@@ -112,7 +122,7 @@ Detail lengkap ada di [`PLAN.md`](PLAN.md).
 ## Instalasi Lokal
 
 ```bash
-git clone https://github.com/<username>/oto-go.git
+git clone https://github.com/rendyirawann/oto-go.git
 cd oto-go
 
 composer install
@@ -171,6 +181,29 @@ PLATFORM_DEFAULT_COMMISSION_PERCENT=5
 
 ## Menjalankan Aplikasi
 
+### Cara cepat (Windows): `start-dev.bat`
+
+Satu klik menyiapkan dan menjalankan semuanya:
+
+| Service | Alamat |
+|---|---|
+| Web + API + Swagger (satu `php artisan serve`) | http://127.0.0.1:8822 |
+| Portal admin | http://127.0.0.1:8822/admin/login |
+| Swagger | http://127.0.0.1:8822/api/documentation |
+| Aplikasi mobile (Flutter web) | http://127.0.0.1:5180 |
+| Reverb (realtime) | ws://127.0.0.1:8080 |
+
+```bat
+start-dev.bat          :: satu jendela Windows Terminal, satu tab per service
+start-dev.bat single   :: semua service di SATU jendela cmd (Ctrl+C menghentikan semuanya)
+```
+
+Skrip memeriksa PHP, PostgreSQL (5433), Redis (6379) dan Flutter, menjalankan `composer install` / `npm install`
+bila perlu, lalu `php artisan migrate`. Akun superadmin awal diambil dari `SUPERADMIN_EMAIL` dan
+`SUPERADMIN_PASSWORD` di `.env` (`php artisan db:seed`).
+
+### Manual
+
 ```bash
 # development (auto reload)
 php artisan octane:start --watch
@@ -186,12 +219,52 @@ Callback Tripay diarahkan ke `POST /api/v1/payments/tripay/callback`. Untuk uji 
 
 ---
 
+## Dokumentasi API
+
+- Swagger UI: `GET /api/documentation` (spesifikasi OpenAPI 3 dibangkitkan dari atribut di controller).
+- Health check: `GET /api/health`.
+- Semua endpoint di bawah `/api/v1`, autentikasi **Laravel Sanctum** (`Authorization: Bearer <token>`).
+- Error selalu JSON: `{"message": "...", "errors": {"field": ["..."]}}`.
+
+| Grup | Endpoint |
+|---|---|
+| Auth | `POST /auth/register`, `POST /auth/login`, `POST /auth/logout` |
+| Profil | `GET/PUT /me`, `PUT /me/password` |
+| Master data | `GET /vehicle-types`, `/vehicle-categories`, `/vehicle-brands`, `/vehicle-models`, `/service-areas`, `/price-estimates` |
+| Kendaraan saya | `GET/POST /me/vehicles`, `GET/PUT/DELETE /me/vehicles/{id}` |
+| Blog | `GET /posts`, `GET /posts/{slug}`, `GET /post-categories` |
+| Asisten AI | `POST /assistant/chat` |
+
+Produksi: set `L5_SWAGGER_GENERATE_ALWAYS=false` dan jalankan `php artisan l5-swagger:generate` saat deploy.
+
+---
+
+## Aplikasi Mobile
+
+Aplikasi pelanggan (Flutter) ada di folder [`mobile/`](mobile/), dibangun dari kerangka `o-mobile` dengan tema dan
+logo OtoGo. API tetap dilayani Laravel di folder ini. Detail ada di [`mobile/README.md`](mobile/README.md).
+
+```bash
+cd mobile
+flutter pub get
+flutter run -d web-server --web-hostname 127.0.0.1 --web-port 5180 --dart-define=API_BASE_URL=http://127.0.0.1:8822
+```
+
+---
+
 ## Testing
 
 ```bash
 php artisan test
 # atau
 ./vendor/bin/pest --parallel
+```
+
+UAT black-box terhadap server yang sedang berjalan (halaman publik, header keamanan, semua aset, crawl
+portal admin, API end-to-end, uji throttle, dan error baru di `laravel.log`):
+
+```bash
+python tools/uat.py --base http://127.0.0.1:8822
 ```
 
 Wajib ada test untuk: isolasi data antar-tenant, toggle modul dan mode layanan, kalkulasi tarif, validasi signature callback Tripay, dan pencegahan double booking.
@@ -221,8 +294,29 @@ database/
   migrations/
   seeders/
 tests/
+mobile/            # aplikasi Flutter pelanggan (OtoGo)
+tools/uat.py       # UAT runner
+resources/brand/   # sumber logo, favicon, OG image (+ make_brand.py)
+database/data/     # data tarif pasar Medan (PLAN.md bagian 9)
+start-dev.bat      # launcher lingkungan pengembangan
 PLAN.md            # rencana teknis lengkap
 ```
+
+---
+
+## Status Implementasi
+
+Per 31 Oktober 2026:
+
+| Area | Status |
+|---|---|
+| Landing page, blog (8 artikel), sitemap, SEO, logo & favicon | Selesai |
+| Portal admin: pengguna, peran, pengaturan, log aktivitas, blog, asisten AI | Selesai |
+| API v1 + Swagger: auth, profil, master kendaraan, kendaraan saya, estimasi harga, blog, asisten AI | Selesai |
+| Asisten AI (Groq + pencarian web Tavily) di portal dan API | Selesai |
+| Aplikasi mobile Flutter (`mobile/`) | Selesai (tahap dasar) |
+| Header keamanan (CSP, HSTS di produksi, dll), indeks database, font & aset self-hosted | Selesai |
+| Tenancy usaha/outlet, katalog jasa, booking, sparepart, Tripay, logistik, langganan | Belum (Fase 1-7 di `PLAN.md`) |
 
 ---
 

@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
             MasterVehicleSeeder::class,
             ServiceAreaSeeder::class,
             MedanPriceTemplateSeeder::class,
+            BlogSeeder::class,
         ]);
     }
 }
